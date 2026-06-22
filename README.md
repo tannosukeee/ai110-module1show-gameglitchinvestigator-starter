@@ -27,35 +27,45 @@ It wrote the code, ran away, and now the game is unplayable.
 
 - [x] **Game purpose:** A number guessing game built with Streamlit. The app picks a secret number between 1 and 100, and the player tries to guess it within a limited number of attempts, receiving a "Too High" or "Too Low" hint after each guess.
 - [x] **Bugs found:**
-  - Inverted hints — a guess lower than the secret was reported as "Too High" instead of "Too Low".
-  - Off-by-one attempt counter — the game reported being out of attempts while one valid attempt was still left, ending the round one guess too early.
-  - Broken "New Game" button — clicking it did nothing because the game state in `st.session_state` was never reset.
-  - [CHECK: The mission above references a secret-number-resetting state bug. Open the "Developer Debug Info" tab, click Submit a few times, and confirm whether the secret changes on every submit. If it does, document it here as a bug and remove this note; if it does not, delete this line.]
+  - Unwinnable game — guessing the exact secret never triggered a win, so the round never ended.
+  - Blank hints — the hint area stayed empty after every guess, even with "Show hint" checked.
+  - Frozen score — the score stayed at 0 regardless of the guesses made.
+  - Root cause for all three: `app.py` did `outcome = check_guess(...)`, but `check_guess` returns a `(outcome, message)` tuple, so the win check, hint lookup, and score update all received a tuple instead of a string.
+  - Shadowed imports — `app.py` re-defined `get_range_for_difficulty`, `parse_guess`, and `update_score` after importing them from `logic_utils.py`; the local `update_score` was a buggy version that changed the score based on odd/even attempt numbers.
 - [x] **Fixes applied:**
-  - Corrected the comparison in `check_guess` so a low guess returns "Too Low" and a high guess returns "Too High".
-  - Fixed the end-of-game condition so the round only ends when no attempts remain.
-  - Reset all relevant `st.session_state` keys (secret, attempts, and the game-over flag) inside the "New Game" handler and called `st.rerun()`.
-  - Refactored the core logic (`check_guess`, `parse_guess`) out of `app.py` into `logic_utils.py`.
+  - Unpacked the `(outcome, message)` pair returned by `check_guess`, so the game can be won, hints display correctly, and the score updates.
+  - Removed the duplicate function definitions in `app.py` that shadowed the imports from `logic_utils.py`, so the app uses the single, tested logic in `logic_utils.py`.
+  - Cleaned up dead code in `app.py` (an unused `secret = str(...)` line and a duplicated `st.warning(message)` call).
 
 ## 📸 Demo Walkthrough
 
 1. The app starts and picks a secret number between 1 and 100, showing the player how many attempts they have.
-2. The player enters a guess of 40 and clicks Submit; the game returns "Too Low".
-3. The player enters a guess of 70; the game returns "Too High".
-4. After each guess the attempt counter decreases by one, and the secret number stays the same throughout the round.
-5. The player guesses the secret number correctly; the game shows a win message and stops accepting new guesses.
-6. The player clicks "New Game"; the secret, attempts, and game state reset, and a fresh round begins.
+2. The player enters a guess of 40 and clicks Submit; the secret is higher, so the game shows the "Go higher." hint.
+3. The player enters a guess of 70; the secret is lower, so the game shows the "Go lower." hint.
+4. After each guess the attempts-left counter decreases by one, and the secret number stays the same throughout the round.
+5. The player guesses the secret number correctly; the game shows a win message with the final score and stops accepting new guesses.
+6. The player clicks "New Game"; the secret, attempts, score, and game state reset, and a fresh round begins.
 
 **Screenshot** *(optional)*: <!-- Insert a screenshot of your fixed, winning game here -->
 
 ## 🧪 Test Results
-
-<!-- CHECK: run pytest and paste your real terminal output below. Do not leave the placeholder text. -->
-
 ```
-$ pytest
-# Paste your actual output here, e.g.:
-# ========================= X passed in 0.XXs =========================
+============================= test session starts =============================
+platform win32 -- Python 3.14.4, pytest-9.0.3, pluggy-1.6.0
+rootdir: ai110-module1show-gameglitchinvestigator-starter
+plugins: anyio-4.14.0, asyncio-1.4.0
+collected 8 items
+
+tests/test_game_logic.py::test_winning_guess PASSED                      [ 12%]
+tests/test_game_logic.py::test_guess_too_high PASSED                     [ 25%]
+tests/test_game_logic.py::test_guess_too_low PASSED                      [ 37%]
+tests/test_game_logic.py::test_check_guess_always_returns_a_pair PASSED  [ 50%]
+tests/test_game_logic.py::test_parse_guess_valid_integer PASSED          [ 62%]
+tests/test_game_logic.py::test_parse_guess_rejects_empty PASSED          [ 75%]
+tests/test_game_logic.py::test_parse_guess_rejects_non_numeric PASSED    [ 87%]
+tests/test_game_logic.py::test_get_range_normal PASSED                   [100%]
+
+============================== 8 passed in 0.05s ==============================
 ```
 
 ## 🚀 Stretch Features
