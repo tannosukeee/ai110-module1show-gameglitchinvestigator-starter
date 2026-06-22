@@ -25,27 +25,36 @@ It wrote the code, ran away, and now the game is unplayable.
 
 ## 📝 Document Your Experience
 
-- [ ] Describe the game's purpose.
-- [ ] Detail which bugs you found.
-- [ ] Explain what fixes you applied.
+- [x] **Game purpose:** A number guessing game built with Streamlit. The app picks a secret number between 1 and 100, and the player tries to guess it within a limited number of attempts, receiving a "Too High" or "Too Low" hint after each guess.
+- [x] **Bugs found:**
+  - Inverted hints — a guess lower than the secret was reported as "Too High" instead of "Too Low".
+  - Off-by-one attempt counter — the game reported being out of attempts while one valid attempt was still left, ending the round one guess too early.
+  - Broken "New Game" button — clicking it did nothing because the game state in `st.session_state` was never reset.
+  - [CHECK: The mission above references a secret-number-resetting state bug. Open the "Developer Debug Info" tab, click Submit a few times, and confirm whether the secret changes on every submit. If it does, document it here as a bug and remove this note; if it does not, delete this line.]
+- [x] **Fixes applied:**
+  - Corrected the comparison in `check_guess` so a low guess returns "Too Low" and a high guess returns "Too High".
+  - Fixed the end-of-game condition so the round only ends when no attempts remain.
+  - Reset all relevant `st.session_state` keys (secret, attempts, and the game-over flag) inside the "New Game" handler and called `st.rerun()`.
+  - Refactored the core logic (`check_guess`, `parse_guess`) out of `app.py` into `logic_utils.py`.
 
 ## 📸 Demo Walkthrough
 
-Describe your fixed game in numbered steps so a reader can follow along without watching a video:
-
-1. <!-- Describe this step -->
-2. <!-- Describe this step -->
-3. <!-- Describe this step -->
-4. <!-- Describe this step -->
-5. <!-- Add more steps as needed -->
+1. The app starts and picks a secret number between 1 and 100, showing the player how many attempts they have.
+2. The player enters a guess of 40 and clicks Submit; the game returns "Too Low".
+3. The player enters a guess of 70; the game returns "Too High".
+4. After each guess the attempt counter decreases by one, and the secret number stays the same throughout the round.
+5. The player guesses the secret number correctly; the game shows a win message and stops accepting new guesses.
+6. The player clicks "New Game"; the secret, attempts, and game state reset, and a fresh round begins.
 
 **Screenshot** *(optional)*: <!-- Insert a screenshot of your fixed, winning game here -->
 
 ## 🧪 Test Results
 
+<!-- CHECK: run pytest and paste your real terminal output below. Do not leave the placeholder text. -->
+
 ```
-# Paste your pytest output here, e.g.:
-# pytest tests/
+$ pytest
+# Paste your actual output here, e.g.:
 # ========================= X passed in 0.XXs =========================
 ```
 
